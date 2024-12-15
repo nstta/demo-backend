@@ -1,0 +1,8 @@
+*.log
+*.tmp
+*.cache
+yolo_flask_env/
+node_modules/
+__pycache__/
+.git/
+.DS_Store
