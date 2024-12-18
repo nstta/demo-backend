@@ -6,3 +6,8 @@ node_modules/
 __pycache__/
 .git/
 .DS_Store
+*.pyc
+pycache/
+*.pkl
+datasets/
+*.log
