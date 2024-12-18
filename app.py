@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app, resources={r"/process": {"origins": "http://localhost:3000"}})
+CORS(app, resources={r"/process": {"origins": os.environ.get("VERCEL_CORS_ORIGIN")}})
 
 # Load the YOLO model
 model = YOLO('./models/best.pt')
