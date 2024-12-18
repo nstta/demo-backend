@@ -4,14 +4,21 @@ from flask_cors import CORS
 import os
 import cv2
 import io
+from werkzeug.utils import secure_filename
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
 CORS(app, resources={r"/process": {"origins": "http://localhost:3000"}})
 
+# Load the YOLO model
 model = YOLO('./models/best.pt')
-print(cv2.__version__)
+logger.info(f"OpenCV version: {cv2.__version__}")
 
+# Class names and text files directory
 class_names = [
     'Andaman damsel', 'Blackside hawkfish', 'Clown anemonefish', 'Fire Goby',
     'Peppered butterflyfish', 'Red lionfish', 'Saddleback clownfish',
@@ -29,19 +36,28 @@ def get_class_info(class_name):
 
 @app.route('/process', methods=['POST'])
 def process_image():
-    print("Request received!")  # Debug log
+    logger.info("Request received!")
+
+    # Check if an image file is included in the request
     if 'image' not in request.files:
-        print("No image file provided")  # Debug log
+        logger.error("No image file provided")
         return jsonify({'error': 'No image file provided'}), 400
 
+    # Save the uploaded image
     image_file = request.files['image']
-    image_path = f'/tmp/{image_file.filename}'
+    image_filename = secure_filename(image_file.filename)
+    image_path = f'/tmp/{image_filename}'
     image_file.save(image_path)
+    logger.info(f"Image successfully received and saved at {image_path}")
 
-    print("Image successfully received and saved.")
+    # Perform model prediction
+    try:
+        results = model.predict(source=image_path, conf=0.25, save=False)
+    except Exception as e:
+        logger.error(f"Prediction error: {e}")
+        return jsonify({'error': 'Error during prediction'}), 500
 
-    results = model.predict(source=image_path, conf=0.25, save=False)
-
+    # Process the results
     response_data = []
     processed_classes = set()
     image = cv2.imread(image_path)
@@ -63,10 +79,11 @@ def process_image():
                     })
                     processed_classes.add(class_name)
 
+    # Encode image for debugging or future use (if needed)
     _, buffer = cv2.imencode('.jpg', image)
     image_data = io.BytesIO(buffer)
 
-    print("Image processed successfully.")
+    logger.info("Image processed successfully.")
 
     return jsonify({
         'results': response_data,
