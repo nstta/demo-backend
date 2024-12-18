@@ -1,14 +1,18 @@
 from flask import Flask, request, jsonify
 from ultralytics import YOLO
 from flask_cors import CORS
+from flask_ngrok import run_with_ngrok
 import os
 import cv2
 import io
 
 app = Flask(__name__)
 
+# Run Flask app with ngrok
+run_with_ngrok(app)
+
 # Configure CORS to allow requests from your frontend
-CORS(app, resources={r"/process": {"origins": "https://fish-demo-h0qhy7r2f-nsttas-projects.vercel.app"}})
+CORS(app, resources={r"/process": {"origins": "http://localhost:3000"}})
 
 # Load YOLO model
 model = YOLO('./models/best.pt')
@@ -55,7 +59,7 @@ def process_image():
     # Run YOLO model prediction
     results = model.predict(source=image_path, conf=0.25, save=False)
 
-    response_data = []
+    response_data = [] 
     processed_classes = set()
     image = cv2.imread(image_path)
 
@@ -88,5 +92,4 @@ def process_image():
     })
 
 if __name__ == '__main__':
-    # Run the Flask app on all available network interfaces
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(debug=True)
