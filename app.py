@@ -8,7 +8,7 @@ import io
 app = Flask(__name__)
 
 # Configure CORS to allow requests from your frontend
-CORS(app, resources={r"/process": {"origins": "http://localhost:3000"}})
+CORS(app, resources={r"/process": {"origins": "http://fish-project-af275thng-nsttas-projects.vercel.app"}})
 
 # Load YOLO model
 model = YOLO('./models/best.pt')
