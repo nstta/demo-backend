@@ -7,11 +7,14 @@ import io
 
 app = Flask(__name__)
 
+# Configure CORS to allow requests from your frontend
 CORS(app, resources={r"/process": {"origins": "http://localhost:3000"}})
 
+# Load YOLO model
 model = YOLO('./models/best.pt')
 print(cv2.__version__)
 
+# Class names and directory for additional info
 class_names = [
     'Andaman damsel', 'Blackside hawkfish', 'Clown anemonefish', 'Fire Goby',
     'Peppered butterflyfish', 'Red lionfish', 'Saddleback clownfish',
@@ -19,6 +22,7 @@ class_names = [
 ]
 text_files_dir = './models/name class'
 
+# Function to get additional information for a class
 def get_class_info(class_name):
     """Get additional information for the detected class."""
     text_file_path = os.path.join(text_files_dir, f"{class_name}.txt")
@@ -27,9 +31,17 @@ def get_class_info(class_name):
             return file.read()
     return "No additional information available."
 
+# Health check route
+@app.route('/')
+def health_check():
+    return "Server is running!", 200
+
+# Main processing route
 @app.route('/process', methods=['POST'])
 def process_image():
     print("Request received!")  # Debug log
+
+    # Check if an image file is provided
     if 'image' not in request.files:
         print("No image file provided")  # Debug log
         return jsonify({'error': 'No image file provided'}), 400
@@ -40,6 +52,7 @@ def process_image():
 
     print("Image successfully received and saved.")
 
+    # Run YOLO model prediction
     results = model.predict(source=image_path, conf=0.25, save=False)
 
     response_data = []
@@ -63,6 +76,8 @@ def process_image():
                     })
                     processed_classes.add(class_name)
 
+    print("Processed classes:", processed_classes)  # Debug log
+
     _, buffer = cv2.imencode('.jpg', image)
     image_data = io.BytesIO(buffer)
 
@@ -73,5 +88,5 @@ def process_image():
     })
 
 if __name__ == '__main__':
-    # Start the Flask app
-    app.run(host='0.0.0.0', port=5002)
+    # Run the Flask app on all available network interfaces
+    app.run(host='0.0.0.0', port=5002, debug=True)
